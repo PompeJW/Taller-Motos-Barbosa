@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Setter
 @Getter
 @Entity
@@ -26,10 +28,10 @@ public class SparePart {
     private String skuCode;
 
     @Column(name = "price_buy")
-    private Double priceBuy;
+    private BigDecimal priceBuy;
 
     @Column(name = "price_sell")
-    private Double priceSell;
+    private BigDecimal priceSell;
 
     private Integer stock;
 
@@ -52,7 +54,7 @@ public class SparePart {
     }
 
     public SparePart(Long id, String name, String description, String skuCode,
-                     Double priceBuy, Double priceSell,
+                     BigDecimal priceBuy, BigDecimal priceSell,
                      Integer stock, Integer minStock,
                      Brand brand, Category category, Status status) {
         this.id = id;
