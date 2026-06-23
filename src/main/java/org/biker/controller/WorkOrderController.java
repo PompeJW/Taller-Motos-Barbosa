@@ -1,13 +1,14 @@
 package org.biker.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.biker.dto.AddSparePartRequest;
-import org.biker.dto.WorkOrderDetailResponse;
-import org.biker.dto.WorkOrderRequest;
+import org.biker.dto.*;
 import org.biker.model.WorkOrder;
 import org.biker.service.WorkOrderService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/work-orders")
@@ -29,14 +30,32 @@ public class WorkOrderController {
 
         return workOrderService.addDetail(id, request);
     }
+    @DeleteMapping("/details/{detailId}")
+    public ResponseEntity<Void> returnSparePart(
+            @PathVariable Long detailId) {
+        workOrderService.returnSparePart(detailId);
+        return  ResponseEntity.noContent().build();
+    }
+    @PatchMapping("/details/{detailId}/return")
+    public ResponseEntity<Void> returnSparePart(
+            @PathVariable Long detailId,
+            @RequestBody ReturnSparePartRequest request) {
 
-   /* @GetMapping
-    public List<WorkOrder> findAll() {
+        workOrderService.returnSparePartSpecific(
+                detailId,
+                request.quantity()
+        );
+
+        return ResponseEntity.noContent().build();
+    }
+
+   @GetMapping
+    public List<WorkOrderResponse> findAll() {
         return workOrderService.findAll();
     }
 
     @GetMapping("/{id}")
-    public WorkOrder findById(@PathVariable Long id) {
+    public WorkOrderResponse findById(@PathVariable Long id) {
         return workOrderService.findById(id);
     }
 
@@ -44,12 +63,18 @@ public class WorkOrderController {
     public WorkOrder updateStatus(
             @PathVariable Long id,
             @RequestParam Long statusId) {
-        return workOrderService.updateStatus(id, statusId);
+        return workOrderService.updateStatus(id,statusId);
+    }
+    @GetMapping("/not-finalizado")
+    public List<WorkOrderResponse> findAllNotFinalizado() {
+        return workOrderService.findAllNotFinalizado();
     }
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        workOrderService.delete(id);
-    }*/
+    @GetMapping("/byName")
+    public List<WorkOrderResponse> findByCustomerName(@RequestParam  String name) {
+        return workOrderService.findByCustomerClient(name);
+    }
+
+
+
 }

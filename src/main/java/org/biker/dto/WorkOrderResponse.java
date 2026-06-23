@@ -1,6 +1,7 @@
 package org.biker.dto;
 
 import org.biker.model.Brand;
+import org.biker.model.WorkOrder;
 import org.biker.model.WorkOrderDetail;
 
 import java.math.BigDecimal;
@@ -13,12 +14,66 @@ public record WorkOrderResponse(
          LocalDateTime createdAt,
          LocalDateTime updatedAt,
          String customerName,
-         Brand brand,
+         Long brandId,
+         String brandName,
          String model,
-         List<ObservationRequest> observations,
+         List<ObservationResponse> observations,
          BigDecimal totalValue,
          BigDecimal labour,
-         Long status,
-         List<WorkOrderDetail> details
+         Long statusId,
+         String statusName,
+         List<WorkOrderDetailResponse> details
 ) {
+
+    public static WorkOrderResponse toResponse(WorkOrder wo) {
+
+        return new WorkOrderResponse(
+                wo.getId(),
+                wo.getOrderNumber(),
+                wo.getCreatedAt(),
+                wo.getUpdatedAt(),
+                wo.getCustomerName(),
+
+                wo.getBrand().getId(),
+                wo.getBrand().getName(),
+
+                wo.getModel(),
+
+
+                wo.getObservations() == null ? List.of() :
+                        wo.getObservations()
+                                .stream()
+                                .map(o -> new ObservationResponse(
+                                        o.getId(),
+                                        o.getDescription()
+                                ))
+                                .toList(),
+
+                wo.getTotalValue(),
+                wo.getLabour(),
+
+                wo.getStatus().getId(),
+                wo.getStatus().getName(),
+
+                wo.getDetails() == null ? List.of() :
+                        wo.getDetails()
+                                .stream()
+                                .map(WorkOrderResponse::toDetailResponse)
+                                .toList()
+        );
+    }
+    public static WorkOrderDetailResponse toDetailResponse(WorkOrderDetail d) {
+
+        return new WorkOrderDetailResponse(
+                d.getId(),
+                d.getQuantity(),
+                d.getUnitPrice(),
+                d.getWorkOrder().getId(),
+                d.getSparePart().getId()
+        );
+    }
+
+
+
+
 }

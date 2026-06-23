@@ -50,7 +50,7 @@ public class WorkOrder {
     @JoinColumn(name = "status_id", nullable = false)
     private Status status;
 
-    @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkOrderDetail> details;
 
     @Column(name = "motorcycle_plate")

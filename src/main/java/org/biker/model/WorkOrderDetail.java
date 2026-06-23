@@ -1,5 +1,6 @@
 package org.biker.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +25,7 @@ public class WorkOrderDetail {
 
         @ManyToOne
         @JoinColumn(name = "work_order_id")
+        @JsonIgnore
         private WorkOrder workOrder;
 
         @ManyToOne
