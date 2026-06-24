@@ -1,12 +1,14 @@
 package org.biker.dto;
 
+import java.math.BigDecimal;
+
 public record SparePartResponse(
         Long id,
         String name,
         String description,
         String skuCode,
-        Double priceBuy,
-        Double priceSell,
+        BigDecimal priceBuy,
+        BigDecimal priceSell,
         Integer stock,
         Integer minStock,
         String brand,
