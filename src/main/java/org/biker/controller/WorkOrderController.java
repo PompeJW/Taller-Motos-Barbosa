@@ -19,8 +19,9 @@ public class WorkOrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public WorkOrder create(@RequestBody WorkOrderRequest request) {
-        return workOrderService.create(request);
+    public WorkOrderResponse create(@RequestBody WorkOrderRequest request) {
+
+        return WorkOrderResponse.toResponse(workOrderService.create(request));
     }
 
     @PostMapping("/{id}/details")
@@ -73,6 +74,20 @@ public class WorkOrderController {
     @GetMapping("/byName")
     public List<WorkOrderResponse> findByCustomerName(@RequestParam  String name) {
         return workOrderService.findByCustomerClient(name);
+    }
+    @GetMapping("/plate")
+    public List<WorkOrderResponse> findByPlate(@RequestParam String plate) {
+        return workOrderService.findByPlate(plate);
+    }
+
+    @GetMapping("/status")
+    public List<WorkOrderResponse> findByStatus(@RequestParam String status) {
+        return workOrderService.findByStatus(status);
+    }
+
+    @GetMapping("/oder-number")
+    public List<WorkOrderResponse> findByOrderNumber(@RequestParam String orderNumber){
+        return  workOrderService.findByOrderNumber(orderNumber);
     }
 
 

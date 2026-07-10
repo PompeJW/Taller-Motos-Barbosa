@@ -29,6 +29,11 @@ public class WorkOrder {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Relación con Client
+    @ManyToOne
+    @JoinColumn(name = "client_id", nullable = false)
+    private Client client;
+
     @Column(name = "customer_name")
     private String customerName;
 

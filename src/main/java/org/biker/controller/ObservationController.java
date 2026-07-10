@@ -28,7 +28,11 @@ import java.util.List;
         }
 
         @GetMapping
-        public List<Observation> findByWorkOrder(@PathVariable Long workOrderId) {
-            return observationService.findByWorkOrder(workOrderId);
+        public List<ObservationResponse> findByWorkOrder(@PathVariable Long workOrderId) {
+            return observationService.findByWorkOrder(workOrderId)
+                    .stream()
+                    .map(o -> new ObservationResponse(o.getId(), o.getDescription()))
+                    .toList();
         }
+
     }

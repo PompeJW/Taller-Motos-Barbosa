@@ -7,6 +7,7 @@ public record WorkOrderDetailResponse(
        Integer quantity,
        BigDecimal unitPrice,
        Long workOrder,
-       Long sparePartId
+       Long sparePartId,
+       String sparePartName
 ) {
 }

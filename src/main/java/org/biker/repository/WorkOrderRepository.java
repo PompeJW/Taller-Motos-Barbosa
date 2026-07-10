@@ -12,5 +12,11 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, Long> {
 
     List<WorkOrder> findByCustomerNameContainingIgnoreCase(String customerName);
 
+    List<WorkOrder> findByMotorcyclePlateContainingIgnoreCase(String motorcyclePlate);
+
+    List<WorkOrder> findByStatusName( String statusName);
+
+    List<WorkOrder> findByOrderNumber( String orderNumber);
+
 
 }

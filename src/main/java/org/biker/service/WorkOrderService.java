@@ -2,15 +2,16 @@ package org.biker.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.biker.dto.*;
+import org.biker.dto.AddSparePartRequest;
+import org.biker.dto.WorkOrderDetailResponse;
+import org.biker.dto.WorkOrderRequest;
+import org.biker.dto.WorkOrderResponse;
 import org.biker.model.*;
 import org.biker.repository.*;
-import org.biker.utils.Message;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ public class WorkOrderService {
     private final StatusRepository statusRepository;
     private final SparePartRepository sparePartRepository;
     private final WorkOrderDetailRepository workOrderDetailRepository;
+    private final ClientRepository clientRepository;
 
     public WorkOrder create(WorkOrderRequest request) {
 
@@ -35,7 +37,21 @@ public class WorkOrderService {
         Status status = statusRepository.findByName("En Progreso")
                 .orElseThrow(() -> new RuntimeException("Status not found"));
 
+        // Buscar cliente
+        Client client;
+        if (request.clientId() != null) {
+            client = clientRepository.findById(request.clientId())
+                    .orElseThrow(() -> new RuntimeException("Client not found"));
+        } else {
+            // Crear cliente nuevo si no existe
+            client = new Client();
+            client.setClientName(request.customerName());
+            client.setDocumento(request.documento());
+            client = clientRepository.save(client);
+        }
+
         WorkOrder workOrder = new WorkOrder();
+        workOrder.setClient(client);
 
         workOrder.setCustomerName(request.customerName());
         workOrder.setMotorcyclePlate(request.motorcyclePlate());
@@ -112,7 +128,8 @@ public class WorkOrderService {
                 detail.getQuantity(),
                 detail.getUnitPrice(),
                 detail.getWorkOrder().getId(),
-                detail.getSparePart().getId()
+                detail.getSparePart().getId(),
+                detail.getSparePart().getName()
         );
     }
 
@@ -230,7 +247,24 @@ public class WorkOrderService {
                 .stream()
                 .map(WorkOrderResponse::toResponse)
                 .toList();
-
+    }
+    public  List<WorkOrderResponse> findByPlate(String motorcyclePlate) {
+        return workOrderRepository.findByMotorcyclePlateContainingIgnoreCase(motorcyclePlate)
+                .stream()
+                .map(WorkOrderResponse::toResponse)
+                .toList();
+    }
+    public List<WorkOrderResponse> findByStatus(String status) {
+        return workOrderRepository.findByStatusName(status)
+                .stream()
+                .map(WorkOrderResponse::toResponse)
+                .toList();
+    }
+    public List<WorkOrderResponse> findByOrderNumber(String orderNumber) {
+        return workOrderRepository.findByOrderNumber(orderNumber)
+                .stream()
+                .map(WorkOrderResponse::toResponse)
+                .toList();
     }
 
 
