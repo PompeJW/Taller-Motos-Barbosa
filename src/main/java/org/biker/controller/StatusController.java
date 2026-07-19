@@ -34,6 +34,13 @@ public class StatusController {
         return status.save(request);
     }
 
+    @GetMapping("/spare-part-status")
+    public List<StatusResponse> getStatusForSparePart(){
+
+        return status.findStatusesForSparePart();
+
+    }
+
   /*  @PutMapping("/{id}")
     public BrandResponse update(
             @PathVariable Long id,

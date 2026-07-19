@@ -5,6 +5,8 @@ import org.biker.dto.BrandRequest;
 import org.biker.dto.BrandResponse;
 import org.biker.model.Brand;
 import org.biker.repository.BrandRepository;
+import org.biker.repository.SparePartRepository;
+import org.biker.repository.WorkOrderRepository;
 import org.biker.utils.Message;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,8 @@ public class BrandService {
 
 
     private final BrandRepository brandRepository;
+    private final WorkOrderRepository workOrderRepository;
+    private final SparePartRepository sparePartRepository;
 
     public List<Brand> findAll() {
         return brandRepository.findAll();
@@ -54,5 +58,24 @@ public class BrandService {
                 updated.getId(),
                 updated.getName()
                 ); return brandResponse;
+    }
+
+    public void delete(Long brandId) {
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new RuntimeException("Brand not found"));
+
+        // Validar si la marca está en uso en órdenes de trabajo
+        boolean usedInWorkOrders = workOrderRepository.existsByBrand(brand);
+        if (usedInWorkOrders) {
+            throw new RuntimeException("No se puede eliminar la marca, está asociada a órdenes de trabajo");
+        }
+
+        // Validar si la marca está en uso en repuestos
+        boolean usedInSpareParts = sparePartRepository.existsByBrand(brand);
+        if (usedInSpareParts) {
+            throw new RuntimeException("No se puede eliminar la marca, está asociada a repuestos");
+        }
+
+        brandRepository.delete(brand);
     }
 }

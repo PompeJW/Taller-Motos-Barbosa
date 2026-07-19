@@ -1,5 +1,6 @@
 package org.biker.repository;
 
+import org.biker.model.Brand;
 import org.biker.model.SparePart;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,4 +20,7 @@ public interface SparePartRepository extends JpaRepository<SparePart, Long> {
        WHERE s.stock <= s.minStock
        """)
     List<SparePart> findByStockLessThanEqual();
+
+    boolean existsByBrand(Brand brand);
+
 }

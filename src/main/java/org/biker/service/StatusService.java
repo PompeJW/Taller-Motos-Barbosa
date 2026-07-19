@@ -3,6 +3,7 @@ package org.biker.service;
 import lombok.RequiredArgsConstructor;
 import org.biker.dto.StatusRequest;
 import org.biker.dto.StatusResponse;
+import org.biker.dto.WorkOrderResponse;
 import org.biker.model.Status;
 import org.biker.repository.StatusRepository;
 import org.biker.utils.Message;
@@ -14,7 +15,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StatusService {
 
-
     private final StatusRepository statusRepository;
 
     public List<Status> findAll() {
@@ -23,11 +23,10 @@ public class StatusService {
 
     public Status findById(Long id) {
         return statusRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(Message.BRAND_NOT_FOUND));
+                .orElseThrow(() -> new RuntimeException(Message.STATUS_NOT_FOUND)); // ✅ corregido
     }
 
     public StatusResponse save(StatusRequest request) {
-
         Status status = new Status();
         status.setName(request.name());
 
@@ -39,20 +38,19 @@ public class StatusService {
         );
     }
 
-   /* public BrandResponse update(Long id, BrandRequest request) {
+    public List<StatusResponse> findStatusesForSparePart() {
+        List<String> allowedStatuses = List.of(
+                "Inventariado",
+                "Descontinuado"
+        );
 
-        Brand existing = brandRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException(Message.BRAND_NOT_FOUND));
-
-        existing.setName(request.name());
-
-        Brand updated = brandRepository.save(existing);
-
-        BrandResponse brandResponse;
-        brandResponse = new BrandResponse(
-                updated.getId(),
-                updated.getName()
-                ); return brandResponse;
-    }*/
+        return statusRepository.findByNameIn(allowedStatuses)
+                .stream()
+                .map(status -> new StatusResponse(
+                        status.getId(),
+                        status.getName()
+                ))
+                .toList();
+    }
 }
+

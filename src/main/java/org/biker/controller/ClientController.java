@@ -58,4 +58,13 @@ public class ClientController {
         return ResponseEntity.ok(clients);
     }
 
+    @GetMapping("/searchDoc")
+    public ResponseEntity<List<ClientResponse>> searchByDocumento(@RequestParam String doc) {
+        List<ClientResponse> clients = clientRepository.findByDocumento(doc)
+                .stream()
+                .map(c -> new ClientResponse(c.getId(), c.getClientName(), c.getDocumento()))
+                .toList();
+        return ResponseEntity.ok(clients);
+    }
+
 }

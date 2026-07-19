@@ -3,7 +3,9 @@ import lombok.RequiredArgsConstructor;
 import org.biker.dto.BrandRequest;
 import org.biker.dto.BrandResponse;
 import org.biker.model.Brand;
+import org.biker.repository.BrandRepository;
 import org.biker.service.BrandService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,6 +41,12 @@ public class BrandController {
             @RequestBody BrandRequest request) {
 
         return service.update(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBrand(@PathVariable Long id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
 }

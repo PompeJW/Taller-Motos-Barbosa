@@ -25,8 +25,23 @@ public class SparePartService {
     private final CategoryRepository categoryRepository;
     private final StatusRepository statusRepository;
 
-    public List<SparePart> findAll() {
-        return repository.findAll();
+    public List<SparePartResponse> findAll() {
+        return repository.findAll()
+                .stream()
+                .map(sp -> new SparePartResponse(
+                        sp.getId(),
+                        sp.getName(),
+                        sp.getDescription(),
+                        sp.getSkuCode(),
+                        sp.getPriceBuy(),
+                        sp.getPriceSell(),
+                        sp.getStock(),
+                        sp.getMinStock(),
+                        sp.getBrand().getName(),
+                        sp.getCategory().getName(),
+                        sp.getStatus().getName()
+                ))
+                .toList();
     }
 
     public SparePart findById(Long id) {

@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -85,9 +86,32 @@ public class WorkOrderController {
         return workOrderService.findByStatus(status);
     }
 
-    @GetMapping("/oder-number")
+    @GetMapping("/order-number")
     public List<WorkOrderResponse> findByOrderNumber(@RequestParam String orderNumber){
-        return  workOrderService.findByOrderNumber(orderNumber);
+        return workOrderService.findByOrderNumber(orderNumber);
+    }
+
+    @PatchMapping("/details/{detailId}/price")
+    public ResponseEntity<Void> updateDetailPrice(
+            @PathVariable Long detailId,
+            @RequestBody UpdatePriceRequest request) {
+
+        workOrderService.updateDetailPrice(detailId, request.newPrice());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/finalizar")
+    public ResponseEntity<WorkOrderResponse> finalizarOrden(
+            @PathVariable Long id,
+            @RequestParam(required = false) BigDecimal labourCost) {
+
+        WorkOrder workOrder = workOrderService.finalizarOrden(id, labourCost);
+        return ResponseEntity.ok(WorkOrderResponse.toResponse(workOrder));
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteWorkOrder(@PathVariable Long id) {
+        workOrderService.deleteWorkOrder(id);
+        return ResponseEntity.noContent().build();
     }
 
 

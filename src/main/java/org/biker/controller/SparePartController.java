@@ -17,7 +17,7 @@ public class SparePartController {
     private final SparePartService service;
 
     @GetMapping
-    public List<SparePart> getAll() {
+    public List<SparePartResponse> getAll() {
         return service.findAll();
     }
 

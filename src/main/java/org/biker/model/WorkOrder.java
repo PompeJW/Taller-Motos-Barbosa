@@ -43,7 +43,7 @@ public class WorkOrder {
 
     private String model;
 
-    @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Observation> observations;
 
     @Column(name = "total_value")
@@ -60,6 +60,11 @@ public class WorkOrder {
 
     @Column(name = "motorcycle_plate")
     private String motorcyclePlate;
+
+    @ManyToOne
+    @JoinColumn(name = "payment_status_id")
+    private WorkOrderPaymentStatus paymentStatus;
+
 
     public WorkOrder() {
     }

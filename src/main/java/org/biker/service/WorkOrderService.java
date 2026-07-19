@@ -113,13 +113,7 @@ public class WorkOrderService {
 
         workOrder.getDetails().add(detail);
 
-        // recalcular total
-        BigDecimal subtotal = sparePart.getPriceSell()
-                .multiply(BigDecimal.valueOf(request.quantity()));
 
-        workOrder.setTotalValue(
-                workOrder.getTotalValue().add(subtotal)
-        );
 
         workOrder.setUpdatedAt(LocalDateTime.now());
 
@@ -154,14 +148,7 @@ public class WorkOrderService {
                 sparePart.getStock() + detail.getQuantity()
         );
 
-        // calcular subtotal del detalle
-        BigDecimal subtotal = detail.getUnitPrice()
-                .multiply(BigDecimal.valueOf(detail.getQuantity()));
 
-        // descontar del total de la orden
-        workOrder.setTotalValue(
-                workOrder.getTotalValue().subtract(subtotal)
-        );
 
         workOrder.setUpdatedAt(LocalDateTime.now());
 
@@ -199,14 +186,7 @@ public class WorkOrderService {
                 sparePart.getStock() + quantityToReturn
         );
 
-        // descontar del total
-        BigDecimal amountToSubtract =
-                detail.getUnitPrice()
-                        .multiply(BigDecimal.valueOf(quantityToReturn));
 
-        workOrder.setTotalValue(
-                workOrder.getTotalValue().subtract(amountToSubtract)
-        );
 
         // actualizar cantidad del detalle
         int newQuantity =
@@ -255,13 +235,20 @@ public class WorkOrderService {
                 .toList();
     }
     public List<WorkOrderResponse> findByStatus(String status) {
+        List<String> allowedStatuses = List.of("Cotizado", "En Progreso", "Pendiente Pago", "Finalizado");
+
+        if (!allowedStatuses.contains(status)) {
+            throw new RuntimeException("Estado no válido para órdenes de trabajo");
+        }
+
         return workOrderRepository.findByStatusName(status)
                 .stream()
                 .map(WorkOrderResponse::toResponse)
                 .toList();
     }
+
     public List<WorkOrderResponse> findByOrderNumber(String orderNumber) {
-        return workOrderRepository.findByOrderNumber(orderNumber)
+        return workOrderRepository.findByOrderNumberContainingIgnoreCase(orderNumber)
                 .stream()
                 .map(WorkOrderResponse::toResponse)
                 .toList();
@@ -285,6 +272,86 @@ public class WorkOrderService {
         return workOrderRepository.save(workOrder);
     }
 
+
+    @Transactional
+    public void updateDetailPrice(Long detailId, BigDecimal newPrice) {
+        WorkOrderDetail detail = workOrderDetailRepository.findById(detailId)
+                .orElseThrow(() -> new RuntimeException("Detalle no encontrado"));
+
+        SparePart sparePart = detail.getSparePart();
+
+        // 👇 Validación: el nuevo precio no puede ser menor al precio de compra
+        if (newPrice.compareTo(sparePart.getPriceBuy()) < 0) {
+            throw new IllegalArgumentException(
+                    "El precio de venta no puede ser menor al precio de compra (" + sparePart.getPriceBuy() + ")"
+            );
+        }
+
+        // ✅ Actualizar el precio de venta
+        detail.setUnitPrice(newPrice);
+        workOrderDetailRepository.save(detail);
+    }
+
+    @Transactional
+    public WorkOrder finalizarOrden(Long workOrderId, BigDecimal labourCost) {
+        WorkOrder workOrder = workOrderRepository.findById(workOrderId)
+                .orElseThrow(() -> new RuntimeException("Work order not found"));
+
+        // Validar que esté en estado "En Progreso"
+        if (!workOrder.getStatus().getName().equalsIgnoreCase("En Progreso")) {
+            throw new RuntimeException("Solo se pueden finalizar órdenes en progreso");
+        }
+
+        // Calcular total de piezas con los precios actuales (ya modificados desde el front)
+        BigDecimal piezasTotal = workOrder.getDetails().stream()
+                .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Mano de obra
+        BigDecimal manoObra = (labourCost != null && labourCost.compareTo(BigDecimal.ZERO) > 0)
+                ? labourCost
+                : BigDecimal.ZERO;
+        workOrder.setLabour(manoObra);
+
+        // Guardar total definitivo
+        workOrder.setTotalValue(piezasTotal.add(manoObra));
+
+        // Cambiar estado a Pendiente Pago (o Finalizado según tu flujo)
+        Status pendientePago = statusRepository.findByName("Pendiente Pago")
+                .orElseThrow(() -> new RuntimeException("Status 'Pendiente Pago' no encontrado"));
+        workOrder.setStatus(pendientePago);
+
+        workOrder.setUpdatedAt(LocalDateTime.now());
+
+        return workOrderRepository.save(workOrder);
+    }
+
+
+    @Transactional
+    public void deleteWorkOrder(Long workOrderId) {
+        WorkOrder workOrder = workOrderRepository.findById(workOrderId)
+                .orElseThrow(() -> new RuntimeException("Work order not found"));
+
+        // Validar estado
+        if (workOrder.getStatus().getName().equalsIgnoreCase("Finalizado")) {
+            throw new RuntimeException("No se puede eliminar una orden finalizada");
+        }
+
+        // Devolver stock de cada detalle
+        for (WorkOrderDetail detail : workOrder.getDetails()) {
+            SparePart sparePart = detail.getSparePart();
+            sparePart.setStock(sparePart.getStock() + detail.getQuantity());
+            workOrderDetailRepository.delete(detail);
+        }
+
+        // Eliminar observaciones si no tienes cascade
+        if (workOrder.getObservations() != null) {
+            workOrder.getObservations().clear();
+        }
+
+        // Finalmente eliminar la orden
+        workOrderRepository.delete(workOrder);
+    }
 
 
 
