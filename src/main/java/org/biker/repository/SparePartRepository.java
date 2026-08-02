@@ -12,7 +12,10 @@ public interface SparePartRepository extends JpaRepository<SparePart, Long> {
 
     List<SparePart> findByNameContainingIgnoreCase(String name);
 
-    Optional<SparePart> findBySkuCode(String skuCode);
+
+    Optional<SparePart> findBySkuCodeContainingIgnoreCase(String skuCode);
+
+    Optional<SparePart> findByNameContainingIgnoreCaseOrSkuCodeContainingIgnoreCase(String skuCode, String query);
 
     @Query("""
        SELECT s

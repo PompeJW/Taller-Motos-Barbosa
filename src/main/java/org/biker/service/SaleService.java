@@ -24,6 +24,7 @@ public class SaleService {
     private final ClientRepository clientRepository;
     private final SparePartRepository sparePartRepository;
     private final PaymentMethodRepository paymentMethodRepository;
+    private final AccountingEntryService accountingEntryService;
 
     /**
      * Registrar una nueva venta por ventanilla
@@ -109,6 +110,19 @@ public class SaleService {
         // Guardar venta y detalles
         Sale savedSale = saleRepository.save(sale);
         details.forEach(saleDetailRepository::save);
+
+        AccountingEntryRequest entryDto = new AccountingEntryRequest(
+                "INGRESO",
+                savedSale.getTotal(),
+                LocalDateTime.now(),
+                "Venta #" + savedSale.getSaleNumber(),
+                null,                  // payment
+                savedSale.getId(),     // sale
+                1L                   // expenseCategory
+        );
+
+        accountingEntryService.createEntry(entryDto);
+
 
         // Retornar respuesta completa
         return new SaleResponse(

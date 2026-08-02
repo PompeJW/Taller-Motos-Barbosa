@@ -7,4 +7,6 @@ public class Message {
     public static final String BRAND_NOT_FOUND = "Marca no encontrada";
     public static final String STATUS_NOT_FOUND = "Estado no encontrado";
     public static final String SKU_NOT_FOUND = "Sku no encontrado";
+    public static final String MOVEMENT_CATEGORY_NOT_FOUND = "Categoría del movimiento no encontrada";
+    public static final String SUBCATEGORY_NOT_FOUND = "Subcategoría no encontrada";
 }

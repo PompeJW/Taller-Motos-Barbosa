@@ -50,23 +50,26 @@ public class SparePart {
     @JoinColumn(name = "status_id", nullable = false)
     private Status status;
 
+    @ManyToOne
+    @JoinColumn(name = "subcategory_id")
+    private SubCategory subCategory;
+
     public SparePart() {
     }
 
-    public SparePart(Long id, String name, String description, String skuCode,
-                     BigDecimal priceBuy, BigDecimal priceSell,
-                     Integer stock, Integer minStock,
-                     Brand brand, Category category, Status status) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.skuCode = skuCode;
-        this.priceBuy = priceBuy;
-        this.priceSell = priceSell;
-        this.stock = stock;
-        this.minStock = minStock;
-        this.brand = brand;
-        this.category = category;
+    public SparePart(SubCategory subCategory, Status status, Category category, Brand brand, Integer minStock, Integer stock, BigDecimal priceSell,
+                     BigDecimal priceBuy, String skuCode, String description, String name, Long id) {
+        this.subCategory = subCategory;
         this.status = status;
+        this.category = category;
+        this.brand = brand;
+        this.minStock = minStock;
+        this.stock = stock;
+        this.priceSell = priceSell;
+        this.priceBuy = priceBuy;
+        this.skuCode = skuCode;
+        this.description = description;
+        this.name = name;
+        this.id = id;
     }
 }

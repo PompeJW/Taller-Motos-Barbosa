@@ -13,6 +13,7 @@ public record SparePartResponse(
         Integer minStock,
         String brand,
         String category,
-        String status
+        String status,
+        String subCategory
 ) {
 }

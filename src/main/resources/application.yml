@@ -1,6 +1,7 @@
 spring:
 
   datasource:
+    #url: jdbc:postgresql://db:5432/motosdb
     url: jdbc:postgresql://localhost:5432/motosdb
     username: admin
     password: admin123
@@ -15,3 +16,4 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect

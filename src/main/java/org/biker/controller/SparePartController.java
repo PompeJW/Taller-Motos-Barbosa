@@ -26,7 +26,7 @@ public class SparePartController {
         return service.findById(id);
     }
 
-    @GetMapping("/search")
+    @GetMapping("/search2")
     public List<SparePart> searchByName(
             @RequestParam String name) {
 
@@ -39,6 +39,13 @@ public class SparePartController {
 
         return service.findBySkuCode(skuCode);
     }
+
+    @GetMapping("/search")
+    public List<SparePartResponse> search(@RequestParam String query) {
+        return service.search(query);
+    }
+
+
 
     @GetMapping("/low-stock")
     public List<SparePart> lowStock() {

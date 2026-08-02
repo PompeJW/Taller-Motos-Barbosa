@@ -1,6 +1,7 @@
 package org.biker.service;
 
 import lombok.RequiredArgsConstructor;
+import org.biker.dto.AccountingEntryRequest;
 import org.biker.dto.PaymentRequest;
 import org.biker.dto.PaymentResponse;
 import org.biker.model.*;
@@ -25,6 +26,7 @@ public class PaymentService {
     private final PaymentMethodRepository paymentMethodRepository;
     private final StatusRepository statusGeneralRepository;
     private final WorkOrderPaymentStatusRepository statusRepository;
+    private final AccountingEntryService accountingEntryService;
 
     //
     public record SaleItemRequest(Long sparePartId, int quantity, double unitPrice) {}
@@ -65,6 +67,18 @@ public class PaymentService {
         );
 
         Payment saved = paymentRepository.save(payment);
+
+        AccountingEntryRequest entryDto = new AccountingEntryRequest(
+                "INGRESO",
+                saved.getAmount(),
+                LocalDateTime.now(),
+                "Abono a la orden de trabajo #" + workOrder.getOrderNumber(),
+                saved.getId(),                  // payment
+                null,     // sale
+                2L                   // expenseCategory
+        );
+
+        accountingEntryService.createEntry(entryDto);
 
         // Actualizar estado de la orden si aplica
         if (workOrder != null) {

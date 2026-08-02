@@ -3,14 +3,8 @@ package org.biker.service;
 import lombok.RequiredArgsConstructor;
 import org.biker.dto.SparePartRequest;
 import org.biker.dto.SparePartResponse;
-import org.biker.model.Brand;
-import org.biker.model.Category;
-import org.biker.model.SparePart;
-import org.biker.model.Status;
-import org.biker.repository.BrandRepository;
-import org.biker.repository.CategoryRepository;
-import org.biker.repository.SparePartRepository;
-import org.biker.repository.StatusRepository;
+import org.biker.model.*;
+import org.biker.repository.*;
 import org.biker.utils.Message;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +17,7 @@ public class SparePartService {
     private final SparePartRepository repository;
     private final BrandRepository brandRepository;
     private final CategoryRepository categoryRepository;
+    private final SubCategoryRepository subCategoryRepository;
     private final StatusRepository statusRepository;
 
     public List<SparePartResponse> findAll() {
@@ -39,7 +34,8 @@ public class SparePartService {
                         sp.getMinStock(),
                         sp.getBrand().getName(),
                         sp.getCategory().getName(),
-                        sp.getStatus().getName()
+                        sp.getStatus().getName(),
+                        sp.getSubCategory().getName()
                 ))
                 .toList();
     }
@@ -55,10 +51,31 @@ public class SparePartService {
 
     public SparePart findBySkuCode(String skuCode) {
 
-        return repository.findBySkuCode(skuCode)
+        return repository.findBySkuCodeContainingIgnoreCase(skuCode)
                 .orElseThrow(() ->
                         new RuntimeException(Message.SKU_NOT_FOUND));
     }
+
+    public List<SparePartResponse> search(String query) {
+        return repository.findByNameContainingIgnoreCaseOrSkuCodeContainingIgnoreCase(query, query)
+                .stream()
+                .map(sp -> new SparePartResponse(
+                        sp.getId(),
+                        sp.getName(),
+                        sp.getDescription(),
+                        sp.getSkuCode(),
+                        sp.getPriceBuy(),
+                        sp.getPriceSell(),
+                        sp.getStock(),
+                        sp.getMinStock(),
+                        sp.getBrand().getName(),
+                        sp.getCategory().getName(),
+                        sp.getStatus().getName(),
+                        sp.getSubCategory().getName()
+                ))
+                .toList();
+    }
+
 
     public List<SparePart> getLowStock() {
         return repository.findByStockLessThanEqual();
@@ -73,6 +90,10 @@ public class SparePartService {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() ->
                         new RuntimeException(Message.CATEGORY_NOT_FOUND));
+
+        SubCategory subCategory = subCategoryRepository.findById(request.categoryId())
+                .orElseThrow(() ->
+                        new RuntimeException(Message.SUBCATEGORY_NOT_FOUND));
 
         Status status = statusRepository.findById(request.statusId())
                 .orElseThrow(() ->
@@ -90,6 +111,7 @@ public class SparePartService {
         sparePart.setBrand(brand);
         sparePart.setCategory(category);
         sparePart.setStatus(status);
+        sparePart.setSubCategory(subCategory);
 
         SparePart saved = repository.save(sparePart);
 
@@ -104,7 +126,8 @@ public class SparePartService {
                 saved.getMinStock(),
                 saved.getBrand().getName(),
                 saved.getCategory().getName(),
-                saved.getStatus().getName()
+                saved.getStatus().getName(),
+                saved.getSubCategory().getName()
         );
     }
 
@@ -122,6 +145,10 @@ public class SparePartService {
                 .orElseThrow(() ->
                         new RuntimeException(Message.CATEGORY_NOT_FOUND));
 
+        SubCategory subCategory = subCategoryRepository.findById(request.categoryId())
+                .orElseThrow(() ->
+                        new RuntimeException(Message.SUBCATEGORY_NOT_FOUND));
+
         Status status = statusRepository.findById(request.statusId())
                 .orElseThrow(() ->
                         new RuntimeException(Message.STATUS_NOT_FOUND));
@@ -136,6 +163,7 @@ public class SparePartService {
         existing.setBrand(brand);
         existing.setCategory(category);
         existing.setStatus(status);
+        existing.setSubCategory(subCategory);
 
         SparePart updated = repository.save(existing);
 
@@ -150,7 +178,8 @@ public class SparePartService {
                 updated.getMinStock(),
                 updated.getBrand().getName(),
                 updated.getCategory().getName(),
-                updated.getStatus().getName()
+                updated.getStatus().getName(),
+                updated.getSubCategory().getName()
         );
     }
 }
