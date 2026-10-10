@@ -11,5 +11,6 @@ public record PaymentResponse(
         String workOrderCode,   // opcional
         String sparePartName,   // opcional
         String paymentMethod,
-        String paymentStatus
+        String paymentStatus,
+        Long workOrderId   // 👈 nuevo campo
 ) {}

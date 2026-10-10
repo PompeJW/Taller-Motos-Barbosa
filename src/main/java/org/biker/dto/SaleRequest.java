@@ -6,6 +6,7 @@ public record SaleRequest(
         Long clientId,
         String customerName,
         String documento,
-        Long paymentMethodId,
-        List<SaleItemRequest> items
+        //Long paymentMethodId,
+        List<SaleItemRequest> items,
+        List<SalePaymentRequest> payments
 ) {}

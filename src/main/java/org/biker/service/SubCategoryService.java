@@ -6,6 +6,7 @@ import org.biker.dto.SubCategoryResponse;
 import org.biker.model.Category;
 import org.biker.model.SubCategory;
 import org.biker.repository.CategoryRepository;
+import org.biker.repository.SparePartRepository;
 import org.biker.repository.SubCategoryRepository;
 import org.biker.utils.Message;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,8 @@ public class SubCategoryService {
 
     private  final SubCategoryRepository subCategoryRepository;
     private  final CategoryRepository categoryRepository;
+
+    private final SparePartRepository sparePartRepository;
 
     public List<SubCategory> finddAll() {
         return subCategoryRepository.findAll();
@@ -74,4 +77,18 @@ public class SubCategoryService {
         return categoryResponse;
 
     }
+
+    public void delete(Long id) {
+        SubCategory existing = subCategoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(Message.SUBCATEGORY_NOT_FOUND));
+
+        // 🔹 Validar con join en SparePart
+        if (sparePartRepository.existsBySubCategory(existing)) {
+            throw new RuntimeException("No se puede eliminar: la subcategoría tiene repuestos asociados");
+        }
+
+        subCategoryRepository.delete(existing);
+    }
+
+
 }

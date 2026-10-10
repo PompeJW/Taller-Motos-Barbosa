@@ -3,7 +3,10 @@ package org.biker.controller;
 import lombok.RequiredArgsConstructor;
 import org.biker.dto.PaymentRequest;
 import org.biker.dto.PaymentResponse;
+import org.biker.dto.WorkOrderResponse;
 import org.biker.service.PaymentService;
+import org.biker.service.PrinterService;
+import org.biker.service.WorkOrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +19,8 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PrinterService printerService;
+    private final WorkOrderService workOrderService;
 
 
     // Registrar una venta libre (ventanilla)
@@ -23,6 +28,21 @@ public class PaymentController {
     public ResponseEntity<PaymentService.SaleResponse> registerSale(@RequestBody PaymentService.SaleRequest request) {
         PaymentService.SaleResponse response = paymentService.registerSale(request);
         return ResponseEntity.ok(response);
+    }
+
+
+    @PostMapping("/{id}/print")
+    public ResponseEntity<Void> printPayment(@PathVariable Long id) {
+        PaymentResponse payment = paymentService.findById(id);
+        WorkOrderResponse workOrder = workOrderService.findById(payment.workOrderId());
+
+
+        try {
+            printerService.printPayment(workOrder, payment);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
     }
 
 

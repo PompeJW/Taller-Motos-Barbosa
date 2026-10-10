@@ -3,6 +3,8 @@ package org.biker.controller;
 import lombok.RequiredArgsConstructor;
 import org.biker.dto.*;
 import org.biker.model.WorkOrder;
+import org.biker.service.PaymentService;
+import org.biker.service.PrinterService;
 import org.biker.service.WorkOrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,8 @@ import java.util.List;
 public class WorkOrderController {
 
     private final WorkOrderService workOrderService;
+    private final PrinterService printerService;
+    private final PaymentService paymentService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -24,6 +28,25 @@ public class WorkOrderController {
 
         return WorkOrderResponse.toResponse(workOrderService.create(request));
     }
+
+    @PostMapping("/{id}/print")
+    public ResponseEntity<Void> printWorkOrder(@PathVariable Long id) {
+        WorkOrderResponse workOrder = workOrderService.findById(id);
+        System.out.println("OT ID recibido: " + id);
+
+
+        // 👉 Recuperar todos los pagos asociados a la OT
+        List<PaymentResponse> payments = paymentService.getPaymentsByWorkOrder(id);
+
+        try {
+            printerService.printWorkOrder(workOrder, payments);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+
 
     @PostMapping("/{id}/details")
     public WorkOrderDetailResponse addDetail(

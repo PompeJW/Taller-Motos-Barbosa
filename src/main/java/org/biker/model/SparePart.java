@@ -43,10 +43,6 @@ public class SparePart {
     private Brand brand;
 
     @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
-
-    @ManyToOne
     @JoinColumn(name = "status_id", nullable = false)
     private Status status;
 
@@ -54,14 +50,17 @@ public class SparePart {
     @JoinColumn(name = "subcategory_id")
     private SubCategory subCategory;
 
+    @Column(name = "barcode", columnDefinition = "TEXT")
+    private String barcode;
+
+
     public SparePart() {
     }
 
-    public SparePart(SubCategory subCategory, Status status, Category category, Brand brand, Integer minStock, Integer stock, BigDecimal priceSell,
-                     BigDecimal priceBuy, String skuCode, String description, String name, Long id) {
+    public SparePart(SubCategory subCategory, Status status, Brand brand, Integer minStock, Integer stock, BigDecimal priceSell,
+                     BigDecimal priceBuy, String skuCode, String description, String name, Long id, String barcode) {
         this.subCategory = subCategory;
         this.status = status;
-        this.category = category;
         this.brand = brand;
         this.minStock = minStock;
         this.stock = stock;
@@ -71,5 +70,6 @@ public class SparePart {
         this.description = description;
         this.name = name;
         this.id = id;
+        this.barcode = barcode;
     }
 }

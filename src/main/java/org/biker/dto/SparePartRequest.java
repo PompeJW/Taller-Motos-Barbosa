@@ -11,8 +11,7 @@ public record SparePartRequest(
         Integer stock,
         Integer minStock,
         Long brandId,
-        Long categoryId,
         Long statusId,
-        Long subCategory
+        Long subCategoryId
 ) {
 }

@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -30,16 +31,20 @@ public class Sale {
     private Client client;
 
     // Método de pago obligatorio
-    @ManyToOne
-    @JoinColumn(name = "payment_method_id", nullable = false)
-    private PaymentMethod paymentMethod;
+    //@ManyToOne
+    //@JoinColumn(name = "payment_method_id", nullable = false)
+    //private PaymentMethod paymentMethod;
 
     @Column(name = "total", nullable = false)
     private BigDecimal total;
 
     // Relación con detalles
-    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<SaleDetail> details;
+
+    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SalePayment> payments = new ArrayList<>();
+
 
     public Sale() {}
 }

@@ -44,5 +44,9 @@ public class SubCategoryController {
     ){
         return service.update(id, request);
     }
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
+    }
 
 }

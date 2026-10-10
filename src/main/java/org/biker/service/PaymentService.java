@@ -95,7 +95,8 @@ public class PaymentService {
                 method.getName(),
                 workOrder != null && workOrder.getPaymentStatus() != null
                         ? workOrder.getPaymentStatus().getStatus()   // ✅ aquí usar getStatus()
-                        : null
+                        : null,
+                workOrder != null ? workOrder.getId() : null   // 👈 aquí
         );
 
 
@@ -116,7 +117,8 @@ public class PaymentService {
                         p.getPaymentMethod().getName(),
                         p.getWorkOrder() != null && p.getWorkOrder().getPaymentStatus() != null
                                 ? p.getWorkOrder().getPaymentStatus().getStatus()   // ✅ aquí también
-                                : null
+                                : null,
+                        p.getWorkOrder() != null ? p.getWorkOrder().getId() : null   // 👈 aquí
                 ))
 
                 .toList();
@@ -137,7 +139,8 @@ public class PaymentService {
                         p.getPaymentMethod().getName(),
                         p.getWorkOrder() != null && p.getWorkOrder().getPaymentStatus() != null
                                 ? p.getWorkOrder().getPaymentStatus().getStatus()   // ✅ corregir aquí
-                                : null
+                                : null,
+                        p.getWorkOrder() != null ? p.getWorkOrder().getId() : null   // 👈 aquí
                 ))
 
                 .toList();
@@ -210,6 +213,8 @@ public class PaymentService {
                 .toList();
     }
 
+
+
     // Registrar venta libre (ventanilla)
     public SaleResponse registerSale(SaleRequest request) {
         Client client = null;
@@ -275,6 +280,24 @@ public class PaymentService {
         );
     }
 
+    public PaymentResponse findById(Long paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Pago no encontrado"));
+
+        return new PaymentResponse(
+                payment.getId(),
+                payment.getAmount(),
+                payment.getPaymentDate(),
+                payment.getClient().getClientName(),
+                payment.getWorkOrder() != null ? payment.getWorkOrder().getOrderNumber() : null,
+                payment.getSparePart() != null ? payment.getSparePart().getName() : null,
+                payment.getPaymentMethod().getName(),
+                payment.getWorkOrder() != null && payment.getWorkOrder().getPaymentStatus() != null
+                        ? payment.getWorkOrder().getPaymentStatus().getStatus()
+                        : null,
+                payment.getWorkOrder() != null ? payment.getWorkOrder().getId() : null   // 👈 nuevo campo
+        );
+    }
 
 
     private PaymentResponse toResponse(Payment p) {
@@ -288,7 +311,8 @@ public class PaymentService {
                 p.getPaymentMethod().getName(),
                 p.getWorkOrder() != null && p.getWorkOrder().getPaymentStatus() != null
                         ? p.getWorkOrder().getPaymentStatus().getStatus()   // ✅ aquí también
-                        : null
+                        : null,
+                p.getWorkOrder() != null ? p.getWorkOrder().getId() : null   // 👈 nuevo campo
         );
 
     }

@@ -82,9 +82,13 @@ public class AccountingEntryService {
                         entry.getPayment() != null ? entry.getPayment().getId() : null,
                         entry.getSale() != null ? entry.getSale().getId() : null,
                         entry.getExpenseCategory() != null ? entry.getExpenseCategory().getId() : null,
-                        entry.getExpenseCategory() != null ? entry.getExpenseCategory().getName() : null
+                        entry.getExpenseCategory() != null ? entry.getExpenseCategory().getName() : null,
+                        entry.getPayment() != null && entry.getPayment().getWorkOrder() != null
+                                ? entry.getPayment().getWorkOrder().getId()
+                                : null   // 👈 ahora sí pasamos el workOrderId
                 ))
                 .toList();
     }
+
 
 }

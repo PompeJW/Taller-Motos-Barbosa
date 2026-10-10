@@ -9,7 +9,9 @@ public record SaleResponse(
         String saleNumber,
         LocalDateTime saleDate,
         String clientName,
-        String paymentMethod,
+        String Clientdocumento,
+        //String paymentMethod,
         BigDecimal total,
-        List<SaleItemResponse> items
+        List<SaleItemResponse> items,
+        List<SalePaymentResponse> payments
 ) {}

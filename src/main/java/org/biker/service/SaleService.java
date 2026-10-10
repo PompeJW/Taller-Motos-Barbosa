@@ -25,11 +25,13 @@ public class SaleService {
     private final SparePartRepository sparePartRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final AccountingEntryService accountingEntryService;
+    private final PrinterService printerService;
+
 
     /**
      * Registrar una nueva venta por ventanilla
      */
-    public SaleResponse registerSale(SaleRequest request) {
+    public SaleResponse registerSale(SaleRequest request)  {
         // Buscar cliente si viene en la petición (puede ser null)
         Client client;
         if (request.clientId() != null) {
@@ -45,22 +47,42 @@ public class SaleService {
 
 
         // Buscar método de pago (obligatorio)
-        PaymentMethod method = paymentMethodRepository.findById(request.paymentMethodId())
-                .orElseThrow(() -> new RuntimeException("Método de pago no encontrado"));
+        //PaymentMethod method = paymentMethodRepository.findById(request.paymentMethodId())
+          //      .orElseThrow(() -> new RuntimeException("Método de pago no encontrado"));
 
         // Crear la venta principal
         Sale sale = new Sale();
         sale.setSaleNumber("SALE-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase()); // Genera número único
         sale.setSaleDate(LocalDateTime.now()); // Fecha actual
         sale.setClient(client); // Cliente (puede ser null)
-        sale.setPaymentMethod(method); // Método de pago
+        //sale.setPaymentMethod(method); // Método de pago
         sale.setTotal(BigDecimal.ZERO); // Inicialmente en cero
 
         // Lista para acumular los detalles
         List<SaleDetail> details = new ArrayList<>();
         List<SaleItemResponse> itemResponses = new ArrayList<>();
 
-        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal total = BigDecimal.ZERO;        // suma de productos
+        BigDecimal totalPayments = BigDecimal.ZERO; // suma de pagos
+
+        List<SalePaymentResponse> paymentResponses = new ArrayList<>();
+
+        for (SalePaymentRequest payReq : request.payments()) {
+            PaymentMethod method = paymentMethodRepository.findById(payReq.paymentMethodId())
+                    .orElseThrow(() -> new RuntimeException("Método de pago no encontrado"));
+
+            SalePayment payment = new SalePayment();
+            payment.setSale(sale);
+            payment.setPaymentMethod(method);
+            payment.setAmount(payReq.amount());
+
+            sale.getPayments().add(payment);
+
+            totalPayments = totalPayments.add(payReq.amount());
+            paymentResponses.add(new SalePaymentResponse(method.getName(), payReq.amount()));
+        }
+
+
 
         // Recorrer cada producto enviado en la petición
         for (SaleItemRequest itemReq : request.items()) {
@@ -106,6 +128,11 @@ public class SaleService {
 
         // Asignar total final a la venta
         sale.setTotal(total);
+        // Validar que la suma de pagos == total de la venta
+        if (totalPayments.compareTo(total) != 0) {
+            throw new RuntimeException("La suma de los pagos no coincide con el total de la venta");
+        }
+
 
         // Guardar venta y detalles
         Sale savedSale = saleRepository.save(sale);
@@ -130,10 +157,13 @@ public class SaleService {
                 savedSale.getSaleNumber(),
                 savedSale.getSaleDate(),
                 client != null ? client.getClientName() : "Venta sin cliente",
-                method.getName(),
+                client != null ? client.getDocumento() : "Cliente sin documento",
                 total,
-                itemResponses
+                itemResponses,
+                paymentResponses
         );
+
+
     }
 
     /**
@@ -177,15 +207,62 @@ public class SaleService {
                         d.getSubtotal()
                 ))
                 .toList();
+        String clientName = sale.getClient() != null ? sale.getClient().getClientName() : "Venta sin cliente";
+        String clientDocumento = sale.getClient() != null ? sale.getClient().getDocumento() : "Cliente sin documento";
+        List<SalePaymentResponse> payments = sale.getPayments()
+                .stream()
+                .map(p -> new SalePaymentResponse(
+                        p.getPaymentMethod().getName(),
+                        p.getAmount()
+                ))
+                .toList();
+
+        return new SaleResponse(
+                sale.getId(),
+                sale.getSaleNumber(),
+                sale.getSaleDate(),
+                clientName,
+                clientDocumento,
+                sale.getTotal(),
+                items,
+                payments
+        );
+
+    }
+
+
+    // Método auxiliar para reutilizar en impresión
+    public SaleResponse findByIdResponse(Long id) {
+        Sale sale = saleRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
+
+        List<SaleItemResponse> items = sale.getDetails()
+                .stream()
+                .map(d -> new SaleItemResponse(
+                        d.getSparePart().getName(),
+                        d.getQuantity(),
+                        d.getUnitPrice(),
+                        d.getSubtotal()
+                ))
+                .toList();
+        List<SalePaymentResponse> payments = sale.getPayments()
+                .stream()
+                .map(p -> new SalePaymentResponse(
+                        p.getPaymentMethod().getName(),
+                        p.getAmount()
+                ))
+                .toList();
 
         return new SaleResponse(
                 sale.getId(),
                 sale.getSaleNumber(),
                 sale.getSaleDate(),
                 sale.getClient() != null ? sale.getClient().getClientName() : "Venta sin cliente",
-                sale.getPaymentMethod().getName(),
+                sale.getClient() != null ? sale.getClient().getDocumento() : "Cliente sin documento",
                 sale.getTotal(),
-                items
+                items,
+                payments
+
         );
     }
 }

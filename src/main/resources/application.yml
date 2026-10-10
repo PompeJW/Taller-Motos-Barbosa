@@ -1,8 +1,10 @@
 spring:
 
   datasource:
-    #url: jdbc:postgresql://db:5432/motosdb
-    url: jdbc:postgresql://localhost:5432/motosdb
+    url: jdbc:postgresql://db:5432/motosdb
+
+    #url: jdbc:postgresql://db-1:5432/motosdb
+    #url: jdbc:postgresql://localhost:5432/motosdb
     username: admin
     password: admin123
 

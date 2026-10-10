@@ -3,6 +3,7 @@ package org.biker.controller;
 import lombok.RequiredArgsConstructor;
 import org.biker.dto.SaleRequest;
 import org.biker.dto.SaleResponse;
+import org.biker.service.PrinterService;
 import org.biker.service.SaleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import java.util.List;
 public class SaleController {
 
     private final SaleService saleService;
+    private final PrinterService printerService;
 
     /**
      * Registrar una nueva venta
@@ -24,6 +26,13 @@ public class SaleController {
     public ResponseEntity<SaleResponse> registerSale(@RequestBody SaleRequest request) {
         SaleResponse response = saleService.registerSale(request);
         return ResponseEntity.ok(response);
+    }
+    // ✅ Endpoint opcional para imprimir
+    @PostMapping("/{id}/print")
+    public ResponseEntity<Void> printSale(@PathVariable Long id) throws Exception {
+        SaleResponse response = saleService.findByIdResponse(id); // método que devuelve SaleResponse
+        printerService.printInvoice(response);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -52,7 +61,7 @@ public class SaleController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<SaleResponse> getSaleById(@PathVariable Long id) {
-        SaleResponse sale = saleService.findById(id);
+        SaleResponse sale = saleService.findByIdResponse(id);
         return ResponseEntity.ok(sale);
     }
 
