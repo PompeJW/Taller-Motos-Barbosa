@@ -1,6 +1,7 @@
 package org.biker.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.biker.dto.BulkUploadResult;
 import org.biker.dto.SparePartRequest;
 import org.biker.dto.SparePartResponse;
 import org.biker.model.SparePart;
@@ -8,6 +9,7 @@ import org.biker.service.PrinterService;
 import org.biker.service.SparePartService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -103,6 +105,14 @@ public class SparePartController {
                 sparePart.getBarcode()
         );
     }
+
+
+    @PostMapping("/bulk-upload")
+    public ResponseEntity<BulkUploadResult> bulkUpload(
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(service.bulkUpload(file));
+    }
+
 
 
 }
