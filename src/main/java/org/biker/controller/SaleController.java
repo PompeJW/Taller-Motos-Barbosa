@@ -17,6 +17,7 @@ public class SaleController {
 
     private final SaleService saleService;
     private final PrinterService printerService;
+    private final org.biker.service.PrintQueueService printQueueService;
 
     /**
      * Registrar una nueva venta
@@ -31,7 +32,7 @@ public class SaleController {
     @PostMapping("/{id}/print")
     public ResponseEntity<Void> printSale(@PathVariable Long id) throws Exception {
         SaleResponse response = saleService.findByIdResponse(id); // método que devuelve SaleResponse
-        printerService.printInvoice(response);
+        printQueueService.requeue(id);
         return ResponseEntity.ok().build();
     }
 

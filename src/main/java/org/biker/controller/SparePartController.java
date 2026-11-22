@@ -19,7 +19,19 @@ import java.util.List;
 public class SparePartController {
 
     private final SparePartService service;
-    private final PrinterService printerService;
+    private final org.biker.service.PrintQueueService printQueueService;
+
+    private final org.biker.service.InventoryExcelReportService inventoryExcelReportService;
+
+    @GetMapping(value = "/inventory-report.xlsx", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public ResponseEntity<byte[]> downloadInventoryReport() throws java.io.IOException {
+        byte[] data = inventoryExcelReportService.generate();
+        String filename = "inventario-biker-" + java.time.LocalDate.now() + ".xlsx";
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentLength(data.length)
+                .body(data);
+    }
 
     @GetMapping
     public List<SparePartResponse> getAll() {
@@ -75,16 +87,11 @@ public class SparePartController {
     }
 
     @PostMapping("/{id}/print-qr")
-    public ResponseEntity<Void> printQr(@PathVariable Long id) {
-        SparePart sparePart = service.findById(id);
-
-        try {
-            // ahora solo imprime una vez, tamaño fijo 3x3 cm
-            printerService.printQr(sparePart.getBarcode());
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(500).build();
-        }
+    public ResponseEntity<java.util.Map<String, Object>> printQr(
+            @PathVariable Long id, @RequestParam(defaultValue = "1") int copies) {
+        SparePart part = service.findById(id);
+        long jobId = printQueueService.queueQr(part, copies);
+        return ResponseEntity.accepted().body(java.util.Map.of("status", "PENDING", "jobId", jobId));
     }
 
     @GetMapping("/code/{code}")

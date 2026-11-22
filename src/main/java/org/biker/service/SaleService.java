@@ -25,7 +25,9 @@ public class SaleService {
     private final SparePartRepository sparePartRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final AccountingEntryService accountingEntryService;
+    private final MovementCategoryRepository movementCategoryRepository;
     private final PrinterService printerService;
+    private final PrintQueueService printQueueService;
 
 
     /**
@@ -138,6 +140,10 @@ public class SaleService {
         Sale savedSale = saleRepository.save(sale);
         details.forEach(saleDetailRepository::save);
 
+        Long saleCategoryId = movementCategoryRepository.findByCode("VENTA_REPUESTOS")
+                .orElseThrow(() -> new IllegalStateException("Falta categoría contable VENTA_REPUESTOS"))
+                .getId();
+
         AccountingEntryRequest entryDto = new AccountingEntryRequest(
                 "INGRESO",
                 savedSale.getTotal(),
@@ -145,14 +151,14 @@ public class SaleService {
                 "Venta #" + savedSale.getSaleNumber(),
                 null,                  // payment
                 savedSale.getId(),     // sale
-                1L                   // expenseCategory
+                saleCategoryId        // Categoría resuelta desde PostgreSQL
         );
 
         accountingEntryService.createEntry(entryDto);
 
 
         // Retornar respuesta completa
-        return new SaleResponse(
+        SaleResponse response = new SaleResponse(
                 savedSale.getId(),
                 savedSale.getSaleNumber(),
                 savedSale.getSaleDate(),
@@ -162,6 +168,8 @@ public class SaleService {
                 itemResponses,
                 paymentResponses
         );
+        printQueueService.queueSale(response);
+        return response;
 
 
     }

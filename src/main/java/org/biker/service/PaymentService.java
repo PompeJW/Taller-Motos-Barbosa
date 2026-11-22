@@ -7,6 +7,7 @@ import org.biker.dto.PaymentResponse;
 import org.biker.model.*;
 import org.biker.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,6 +28,7 @@ public class PaymentService {
     private final StatusRepository statusGeneralRepository;
     private final WorkOrderPaymentStatusRepository statusRepository;
     private final AccountingEntryService accountingEntryService;
+    private final MovementCategoryRepository movementCategoryRepository;
 
     //
     public record SaleItemRequest(Long sparePartId, int quantity, double unitPrice) {}
@@ -38,7 +40,11 @@ public class PaymentService {
 
 
     // Registrar un pago (venta directa o abono de orden)
+    @Transactional
     public PaymentResponse registerPayment(PaymentRequest request) {
+        if (request.amount() == null || request.amount().signum() <= 0) {
+            throw new IllegalArgumentException("El valor del pago debe ser mayor que cero");
+        }
         Client client = clientRepository.findById(request.clientId())
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
 
@@ -47,8 +53,25 @@ public class PaymentService {
 
         WorkOrder workOrder = null;
         if (request.workOrderId() != null) {
-            workOrder = workOrderRepository.findById(request.workOrderId())
+            workOrder = workOrderRepository.findByIdForUpdate(request.workOrderId())
                     .orElseThrow(() -> new RuntimeException("Orden de trabajo no encontrada"));
+        }
+
+        if (workOrder != null) {
+            if (workOrder.getStatus() == null || !"Pendiente Pago".equalsIgnoreCase(workOrder.getStatus().getName())) {
+                throw new IllegalStateException("La orden no se encuentra en estado Pendiente Pago");
+            }
+            BigDecimal total = workOrder.getTotalValue() == null ? BigDecimal.ZERO : workOrder.getTotalValue();
+            BigDecimal paid = paymentRepository.findByWorkOrderId(workOrder.getId()).stream()
+                    .map(Payment::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal remaining = total.subtract(paid);
+            if (remaining.signum() <= 0 || request.amount().compareTo(remaining) > 0) {
+                throw new IllegalArgumentException("El pago excede el saldo pendiente de la orden: " + remaining.max(BigDecimal.ZERO));
+            }
+            if (!workOrder.getClient().getId().equals(client.getId())) {
+                throw new IllegalArgumentException("El cliente no corresponde a la orden de trabajo");
+            }
         }
 
         SparePart sparePart = null;
@@ -68,17 +91,17 @@ public class PaymentService {
 
         Payment saved = paymentRepository.save(payment);
 
-        AccountingEntryRequest entryDto = new AccountingEntryRequest(
-                "INGRESO",
-                saved.getAmount(),
-                LocalDateTime.now(),
-                "Abono a la orden de trabajo #" + workOrder.getOrderNumber(),
-                saved.getId(),                  // payment
-                null,     // sale
-                2L                   // expenseCategory
-        );
-
-        accountingEntryService.createEntry(entryDto);
+        if (workOrder != null) {
+            Long serviceCategoryId = movementCategoryRepository.findByCode("SERVICIOS_TALLER")
+                    .orElseThrow(() -> new IllegalStateException("Falta categoría contable SERVICIOS_TALLER"))
+                    .getId();
+            AccountingEntryRequest entryDto = new AccountingEntryRequest(
+                    "INGRESO", saved.getAmount(), LocalDateTime.now(),
+                    "Abono a la orden de trabajo #" + workOrder.getOrderNumber(),
+                    saved.getId(), null, serviceCategoryId
+            );
+            accountingEntryService.createEntry(entryDto);
+        }
 
         // Actualizar estado de la orden si aplica
         if (workOrder != null) {
@@ -149,24 +172,21 @@ public class PaymentService {
     // Lógica para actualizar estado de pago de la orden
 
     private void updateWorkOrderPaymentStatus(WorkOrder workOrder) {
-        double totalPagado = paymentRepository.findByWorkOrderId(workOrder.getId())
-                .stream()
-                .mapToDouble(p -> p.getAmount().doubleValue())
-                .sum();
-
-        double totalOrden = workOrder.getTotalValue().doubleValue();
+        BigDecimal totalPagado = paymentRepository.findByWorkOrderId(workOrder.getId())
+                .stream().map(Payment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalOrden = workOrder.getTotalValue();
 
         WorkOrderPaymentStatus status;
-        if (totalPagado == totalOrden) {
-            status = statusRepository.findById(2L).orElseThrow();
+        if (totalPagado.compareTo(totalOrden) >= 0) {
+            status = statusRepository.findFirstByStatusIgnoreCase("Pagado").orElseThrow(() -> new IllegalStateException("Falta estado de pago: Pagado"));
             // 👇 además de actualizar el estado de pago, cambia el estado general
             Status finalizado = statusGeneralRepository.findByName("Finalizado")
                     .orElseThrow(() -> new RuntimeException("Estado 'Finalizado' no encontrado"));
             workOrder.setStatus(finalizado);
-        } else if (totalPagado < totalOrden && totalPagado > 0) {
-            status = statusRepository.findById(3L).orElseThrow();
+        } else if (totalPagado.compareTo(totalOrden) < 0 && totalPagado.signum() > 0) {
+            status = statusRepository.findFirstByStatusIgnoreCase("Abonado").orElseThrow(() -> new IllegalStateException("Falta estado de pago: Abonado"));
         } else {
-            status = statusRepository.findById(1L).orElseThrow();
+            status = statusRepository.findFirstByStatusIgnoreCase("Pendiente").orElseThrow(() -> new IllegalStateException("Falta estado de pago: Pendiente"));
         }
 
         workOrder.setPaymentStatus(status);

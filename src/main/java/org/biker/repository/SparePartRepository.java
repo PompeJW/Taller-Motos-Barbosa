@@ -6,11 +6,18 @@ import org.biker.model.SparePart;
 import org.biker.model.SubCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface SparePartRepository extends JpaRepository<SparePart, Long> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from SparePart p where p.id = :id")
+    Optional<SparePart> findByIdForUpdate(@Param("id") Long id);
+
 
     List<SparePart> findByNameContainingIgnoreCase(String name);
 

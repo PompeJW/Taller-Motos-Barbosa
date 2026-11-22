@@ -7,7 +7,9 @@ spring:
     url: jdbc:postgresql://localhost:5432/motosdb
     username: admin
     password: admin123
-
+  biker:
+    print:
+      token: ${BIKER_PRINT_TOKEN:}
   jpa:
 
     hibernate:

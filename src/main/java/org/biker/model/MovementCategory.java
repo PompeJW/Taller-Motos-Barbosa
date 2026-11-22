@@ -15,6 +15,9 @@ public class MovementCategory {
     private Long id;
     private String name;
 
+    @Column(name = "code", unique = true, length = 80)
+    private String code;
+
     public MovementCategory() {
     }
 
